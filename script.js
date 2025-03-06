@@ -1,28 +1,66 @@
 let computingPower = 0 
 let autoPower = 0
+let computeClick = 1
+const updateInterval = 50 //updates every 50ms
+const ticksPerSecond = 1000 / updateInterval
+const EPSILON = 0.0001
 
-function updateUI() {
-    document.getElementById('powerCount').innerText = computingPower.toFixed(2)
-    document.getElementById('upgradeCost').innerText = (10 + autoPower*5).toFixed(2)
+const upgrades = {
+    computeUpgrade: {
+        name: "Improve Source Code",
+        amount: 1,
+        production: 1, //compute per click increase
+        get totalProd() { return this.production * this.amount; },
+        costMultiplier: 1.3,
+        get cost() { return 10 * Math.pow(this.costMultiplier, this.amount-1); }
+    },
+    basicScript: {
+        name: "Basic Script",
+        amount: 0,
+        production: 1, //compute per second
+        get totalProd() { return this.production * this.amount; },
+        costMultiplier: 1.15,
+        get cost() { return 10 * Math.pow(this.costMultiplier, this.amount); }
+    }
 }
 
-document.getElementById("computeBtn").addEventListener("click", function() {
-    computingPower += 1
+function updateUI() {
+    document.getElementById('powerCount').innerText = computingPower.toFixed(1)
+    document.getElementById('compUpgradeBtn').innerText = upgrades.computeUpgrade.cost.toFixed(1)
+    document.getElementById('basicScriptBtn').innerText = upgrades.basicScript.cost.toFixed(1)
+}
+
+document.getElementById("genComputeButton").addEventListener("click", function() {
+    computingPower += upgrades.computeUpgrade.totalProd
     updateUI()
 })
 
-document.getElementById("buyUpgradeBtn").addEventListener("click", function() {
-    let cost = 10+autoPower*5
-    if (computingPower >= cost) {
-        computingPower -= cost
-        autoPower += 1
+document.getElementById("genComputeUpgradeButton").addEventListener("click", function() {
+    let upgrade = upgrades.computeUpgrade
+    if (computingPower + EPSILON >= upgrade.cost) {
+        computingPower -= upgrade.cost
+        upgrade.amount++
         updateUI()
     }
 })
 
-setInterval(function() {
-    computingPower += autoPower * 0.5
-    updateUI()
-}, 1000)
+document.getElementById("buyBasicScript").addEventListener("click", function() {
+    let upgrade = upgrades.basicScript
+    if (computingPower + EPSILON >= upgrade.cost) {
+        computingPower -= upgrade.cost
+        upgrade.amount++
+        updateUI()
+    }
+})
 
-updateUI()
+function gameLoop() {
+    let totalPowerPerSecond = upgrades.basicScript.totalProd
+    let computeGain = totalPowerPerSecond / ticksPerSecond
+
+    computingPower += computeGain
+    computingPower = Math.round(computingPower * 10) / 10
+    updateUI()
+    setTimeout(gameLoop, updateInterval)
+}
+
+gameLoop()
