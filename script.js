@@ -10,6 +10,17 @@ const upgrades = {
         costMultiplier: 1.5,
         get cost() { return 10 * (this.costMultiplier ** ((this.amount - 1) ** 1.5)); }
     },
+    optimizedScripts: {
+        name: "Optimized Scripts",
+        amount: 1,
+        effect: 1.1, // Multiplier for passive income
+        get totalMult() { return this.effect ** this.amount; },
+        costMultiplier: 1.2,
+        get cost() { return 100 * (this.costMultiplier**(this.amount - 1)); }
+    },
+};
+
+const bots = {
     basicScript: {
         name: "Basic Script",
         amount: 0,
@@ -18,18 +29,11 @@ const upgrades = {
         costMultiplier: 1.4,
         get cost() { return 10 * (this.costMultiplier ** this.amount); }
     },
-    optimizedScripts: {
-        name: "Optimized Scripts",
-        amount: 1,
-        effect: 1.1, // Multiplier for passive income
-        get totalMult() { return this.effect ** this.amount; },
-        costMultiplier: 1.2,
-        get cost() { return 100 * Math.pow(this.costMultiplier, this.amount - 1); }
-    },
 }
 
 const elements = {
     powerCount: document.getElementById('powerCount'),
+    computePerSec: document.getElementById('computePerSec'),
     compUpgradeBtn: document.getElementById('compUpgradeBtn'),
     basicScriptBtn: document.getElementById('basicScriptBtn'),
     optimizedScriptsBtn: document.getElementById('optimizedScriptsBtn'),
@@ -37,8 +41,9 @@ const elements = {
 
 function updateUI() {
     elements.powerCount.innerText = computingPower.toFixed(1);
+    elements.computePerSec.innerText = (totalPowerPerSecond()).toFixed(1);
     elements.compUpgradeBtn.innerText = Math.ceil(upgrades.computeUpgrade.cost);
-    elements.basicScriptBtn.innerText = Math.ceil(upgrades.basicScript.cost);
+    elements.basicScriptBtn.innerText = Math.ceil(bots.basicScript.cost);
     elements.optimizedScriptsBtn.innerText = Math.ceil(upgrades.optimizedScripts.cost);
 }
 
@@ -57,7 +62,7 @@ document.getElementById("genComputeUpgradeButton").addEventListener("click", fun
 });
 
 document.getElementById("buyBasicScript").addEventListener("click", function() {
-    let upgrade = upgrades.basicScript;
+    let upgrade = bots.basicScript;
     if (computingPower + EPSILON >= upgrade.cost) {
         computingPower -= upgrade.cost;
         upgrade.amount++;
@@ -75,12 +80,14 @@ document.getElementById("buyOptimizedScripts").addEventListener("click", functio
 });
 
 let lastUpdate = performance.now();
-
+function totalPowerPerSecond() {
+    return bots.basicScript.totalProd * upgrades.optimizedScripts.totalMult;
+}
 function gameLoop(timestamp) {
     let deltaTime = (timestamp - lastUpdate) / 1000;
     lastUpdate = timestamp;
 
-    let totalPowerPerSecond = upgrades.basicScript.totalProd * upgrades.optimizedScripts.totalMult;
+    let totalPowerPerSecond = totalPowerPerSecond();
     computingPower += totalPowerPerSecond * deltaTime;
 
     updateUI();
