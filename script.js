@@ -53,14 +53,19 @@ document.getElementById("buyBasicScript").addEventListener("click", function() {
     }
 })
 
-function gameLoop() {
-    let totalPowerPerSecond = upgrades.basicScript.totalProd
-    let computeGain = totalPowerPerSecond / ticksPerSecond
+let lastUpdate = performance.now();
 
-    computingPower += computeGain
-    computingPower = Math.round(computingPower * 10) / 10
-    updateUI()
-    setTimeout(gameLoop, updateInterval)
+function gameLoop(timestamp) {
+    let deltaTime = (timestamp - lastUpdate) / 1000;
+    lastUpdate = timestamp;
+
+    let totalPowerPerSecond = upgrades.basicScript.totalProd;
+    
+    computingPower += totalPowerPerSecond * deltaTime;
+    
+    updateUI();
+    
+    requestAnimationFrame(gameLoop);
 }
 
-gameLoop()
+requestAnimationFrame(gameLoop);
